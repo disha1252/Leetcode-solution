@@ -1,46 +1,48 @@
-from collections import defaultdict, deque
-
 class Solution:
-    def findLadders(self, beginWord: str, endWord: str, wordList):
+    def findLadders(self, beginWord: str, endWord: str, wordList: List[str]) -> List[List[str]]:
         wordSet = set(wordList)
         if endWord not in wordSet:
             return []
-        
-        parents = defaultdict(list)
+
+        L = len(beginWord)
+
+        pattern_map = defaultdict(list)
+        for word in wordSet:
+            for i in range(L):
+                pattern = word[:i] + "*" + word[i+1:]
+                pattern_map[pattern].append(word)
+
+        parents = defaultdict(set)
         level = {beginWord}
         found = False
-        
+
         while level and not found:
             next_level = set()
-            
+            wordSet -= level
+
             for word in level:
-                wordSet.discard(word)
-            
-            for word in level:
-                for i in range(len(word)):
-                    for c in 'abcdefghijklmnopqrstuvwxyz':
-                        new_word = word[:i] + c + word[i+1:]
-                        
-                        if new_word in wordSet:
-                            next_level.add(new_word)
-                            parents[new_word].append(word)
-                            
-                            if new_word == endWord:
+                for i in range(L):
+                    pattern = word[:i] + "*" + word[i+1:]
+                    for nei in pattern_map[pattern]:
+                        if nei in wordSet:
+                            next_level.add(nei)
+                            parents[nei].add(word)
+                            if nei == endWord:
                                 found = True
-            
+
             level = next_level
-        
+
+        if not found:
+            return []
+
         res = []
-        
+
         def dfs(word, path):
             if word == beginWord:
                 res.append(path[::-1])
                 return
-            
             for p in parents[word]:
                 dfs(p, path + [p])
-        
-        if found:
-            dfs(endWord, [endWord])
-        
+
+        dfs(endWord, [endWord])
         return res
